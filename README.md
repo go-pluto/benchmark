@@ -1,2 +1,3 @@
 # benchmark
-Benchmark provides means to evaluate response time performance of pluto, Dovecot, and Gmail.
+
+Benchmark provides utilities to generate IMAP sessions and use them to benchmark pluto, Dovecot, and Gmail.
