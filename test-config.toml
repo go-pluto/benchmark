@@ -2,7 +2,7 @@
 # This is an example config file
 
 [server]
-addr = "127.0.0.1:19933"
+addr = "127.0.0.1:1993"
 TLS = true # unused
 
 [settings]

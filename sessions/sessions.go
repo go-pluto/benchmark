@@ -6,7 +6,7 @@ import (
 
 	"math/rand"
 
-	"github.com/benchmark/utils"
+	"github.com/go-pluto/benchmark/utils"
 )
 
 // Structs
