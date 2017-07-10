@@ -1,0 +1,21 @@
+workspace:
+  base: /go
+  path: src/github.com/go-pluto/benchmark
+
+pipeline:
+  build:
+    image: golang:1.8
+    commands:
+    - go get ./...
+    - CGO_ENABLED=0 go build -ldflags '-extldflags "-static"'
+    when:
+      event: [ push, tag ]
+
+  docker:
+    image: plugins/docker
+    repo: gopluto/benchmark
+    secrets: [ docker_username, docker_password ]
+    tag: [ latest ]
+    when:
+      branch: master
+      event: push

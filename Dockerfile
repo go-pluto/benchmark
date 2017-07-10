@@ -1,14 +1,8 @@
-FROM golang:latest
+FROM alpine:3.6
 
-RUN mkdir -p /go/src/github.com/go-pluto/benchmark
-RUN mkdir /config
-RUN mkdir /users
+RUN mkdir /config /users
 
-ADD . /go/src/github.com/go-pluto/benchmark/
+ADD ./benchmark /bin/
 
-WORKDIR /go/src/github.com/go-pluto/benchmark
-RUN go get ./...
-RUN go build imap-benchmark.go
-
-ENTRYPOINT ["/go/src/github.com/go-pluto/benchmark"]
+ENTRYPOINT ["/bin/benchmark"]
 CMD ["-config", "/config/config.toml","-userdb","/users/passwd","-logtostderr=true","-v=3"]
