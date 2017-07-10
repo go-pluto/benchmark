@@ -1,0 +1,16 @@
+
+# This is an example config file
+
+[server]
+addr = "127.0.0.1:19933"
+TLS = true # unused
+
+[settings]
+threads = 5
+sessions = 10
+throttle = 50 # unused
+seed = 3223362035854775808
+
+[session]
+minlength = 15
+maxlength = 40
