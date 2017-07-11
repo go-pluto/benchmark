@@ -334,11 +334,11 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 	commands = append(commands, IMAPCommand{Command: "SELECT", Arguments: arguments})
 
 	// Finish session by deleting all created folders.
-	for i := 0; i < len(folders); i++ {
-		var args []string
-		args = append(args, folders[i].Foldername)
-		commands = append(commands, IMAPCommand{Command: "DELETE", Arguments: args})
-	}
+	// for i := 0; i < len(folders); i++ {
+	// 	var args []string
+	// 	args = append(args, folders[i].Foldername)
+	// 	commands = append(commands, IMAPCommand{Command: "DELETE", Arguments: args})
+	// }
 
 	return commands
 }

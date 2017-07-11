@@ -5,4 +5,4 @@ RUN mkdir /config /users
 ADD ./benchmark /bin/
 
 ENTRYPOINT ["/bin/benchmark"]
-CMD ["-config", "/config/config.toml","-userdb","/users/passwd","-logtostderr=true","-v=3"]
+CMD ["-config", "/config/config.toml","-userdb","/users/passwd","-logtostderr=true","-v=2"]
