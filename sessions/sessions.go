@@ -1,7 +1,6 @@
 package sessions
 
 import (
-	"fmt"
 	"strconv"
 
 	"math/rand"
@@ -158,14 +157,9 @@ func appendMsg(folders *[]Folder) IMAPCommand {
 
 	// TODO: Generate date/time string - OPTIONAL.
 
-	// Append message size to arguments list.
-	arguments = append(arguments, "{310}")
-
-	// Generate message.
-	// TODO: Replace with a proper message generator.
-	var msg string
-	msg = fmt.Sprintf("Date: Mon, 7 Feb 1994 21:52:25 -0800 (PST)\r\nFrom: Fred Foobar <foobar@Blurdybloop.COM>\r\nSubject: afternoon meeting\r\nTo: mooch@owatagu.siam.edu\r\nMessage-Id: <B27397-0100000@Blurdybloop.COM>\r\nMIME-Version: 1.0\r\nContent-Type: TEXT/PLAIN; CHARSET=US-ASCII\r\n\r\nHello Joe, do you think we can meet at 3:30 tomorrow?\r\n")
-
+	// Generate message length and message to append.
+	msgLen, msg := utils.GenerateMsg()
+	arguments = append(arguments, msgLen)
 	arguments = append(arguments, msg)
 
 	(*folders)[folderIndex].Messages = append((*folders)[folderIndex].Messages, Message{Flags: flags})
