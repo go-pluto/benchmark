@@ -18,10 +18,10 @@ type IMAPCommand struct {
 	Arguments []string
 }
 
-// Folder represents an imap folder with the
+// Folder represents an IMAP folder including
 // contained messages.
 type Folder struct {
-	Foldername string
+	FolderName string
 	Messages   []Message
 }
 
@@ -33,8 +33,8 @@ type Message struct {
 
 // Functions
 
-// expungeFolder generates an EXPUNGE command and
-// removes all messages with a \Deleted flag from a folder.
+// expungeFolder generates an EXPUNGE command and removes
+// all messages with a \Deleted flag from supplied folder.
 func expungeFolder(folder *Folder) IMAPCommand {
 
 	for j := 0; j < len(folder.Messages); j++ {
@@ -49,39 +49,49 @@ func expungeFolder(folder *Folder) IMAPCommand {
 		}
 	}
 
-	return IMAPCommand{Command: "EXPUNGE"}
+	return IMAPCommand{
+		Command: "EXPUNGE",
+	}
 }
 
-// createFolder generates a CREATE command with
-// a randomly generated foldername. The newly created
+// createFolder generates a CREATE command with a
+// randomly generated folder name. The newly created
 // folder is appended to the set of folders.
 func createFolder(folders *[]Folder) IMAPCommand {
 
 	var arguments []string
 
-	initFoldername := utils.GenerateString(8)
+	initFolderName := utils.GenerateString(8)
 
-	// Rerandom in case the generated folder name
+	// Re-generate in case the generated folder name
 	// already exists in this session.
 	for j := 0; j < len(*folders); j++ {
-		if initFoldername == (*folders)[j].Foldername {
-			initFoldername = utils.GenerateString(8)
+
+		if initFolderName == (*folders)[j].FolderName {
+			initFolderName = utils.GenerateString(8)
 			j = -1
 		}
 	}
 
 	var messages []Message
 
-	initFolder := Folder{Foldername: initFoldername, Messages: messages}
+	initFolder := Folder{
+		FolderName: initFolderName,
+		Messages:   messages,
+	}
 
 	*folders = append(*folders, initFolder)
-	arguments = append(arguments, initFoldername)
-	return IMAPCommand{Command: "CREATE", Arguments: arguments}
+	arguments = append(arguments, initFolderName)
+
+	return IMAPCommand{
+		Command:   "CREATE",
+		Arguments: arguments,
+	}
 }
 
 // deleteFolder generates a DELETE command by deleting
-// a random folder from the set of folders. Moreover
-// the index of the selected folder is adjusted accordingly.
+// a random folder from the set of folders. Moreover, the
+// index of the selected folder is adjusted accordingly.
 func deleteFolder(folders *[]Folder, selected *int) IMAPCommand {
 
 	var arguments []string
@@ -92,7 +102,7 @@ func deleteFolder(folders *[]Folder, selected *int) IMAPCommand {
 		folderIndex = rand.Intn(len(*folders))
 	}
 
-	foldername := (*folders)[folderIndex].Foldername
+	folderName := (*folders)[folderIndex].FolderName
 
 	*folders = append((*folders)[:folderIndex], (*folders)[folderIndex+1:]...)
 
@@ -100,24 +110,32 @@ func deleteFolder(folders *[]Folder, selected *int) IMAPCommand {
 		*selected = *selected - 1
 	}
 
-	arguments = append(arguments, foldername)
-	return IMAPCommand{Command: "DELETE", Arguments: arguments}
+	arguments = append(arguments, folderName)
+
+	return IMAPCommand{
+		Command:   "DELETE",
+		Arguments: arguments,
+	}
 }
 
 // selectFolder generates a SELECT command by choosing a random
-// folder from the set of folders. Moreover the index of the selected
-// folder is adjusted accordingly.
+// folder from the set of folders. Moreover, the index of the
+// selected folder is adjusted accordingly.
 func selectFolder(folders *[]Folder, selected *int) IMAPCommand {
 
 	var arguments []string
 
 	folderIndex := rand.Intn(len(*folders))
-	foldername := (*folders)[folderIndex].Foldername
+	folderName := (*folders)[folderIndex].FolderName
 
-	arguments = append(arguments, foldername)
+	arguments = append(arguments, folderName)
 
 	*selected = folderIndex
-	return IMAPCommand{Command: "SELECT", Arguments: arguments}
+
+	return IMAPCommand{
+		Command:   "SELECT",
+		Arguments: arguments,
+	}
 }
 
 // appendMsg generates an APPEND command by choosing a random folder
@@ -131,14 +149,16 @@ func appendMsg(folders *[]Folder) IMAPCommand {
 	folderIndex := rand.Intn(len(*folders))
 
 	// Lookup folder name and add it to the arguments list.
-	foldername := (*folders)[folderIndex].Foldername
-	arguments = append(arguments, foldername)
+	folderName := (*folders)[folderIndex].FolderName
+	arguments = append(arguments, folderName)
 
-	// Generate flags of the message.
-	flagstring, flags := utils.GenerateFlags()
-	arguments = append(arguments, flagstring)
+	// Generate flags of the message - OPTIONAL.
+	flagsString, flags := utils.GenerateFlags()
+	arguments = append(arguments, flagsString)
 
-	// Generate date/time string - OPTIONAL.
+	// TODO: Generate date/time string - OPTIONAL.
+
+	// Append message size to arguments list.
 	arguments = append(arguments, "{310}")
 
 	// Generate message.
@@ -150,8 +170,10 @@ func appendMsg(folders *[]Folder) IMAPCommand {
 
 	(*folders)[folderIndex].Messages = append((*folders)[folderIndex].Messages, Message{Flags: flags})
 
-	return IMAPCommand{Command: "APPEND", Arguments: arguments}
-
+	return IMAPCommand{
+		Command:   "APPEND",
+		Arguments: arguments,
+	}
 }
 
 // storeMsg generates a STORE command by choosing a random
@@ -163,14 +185,17 @@ func storeMsg(folder *Folder) IMAPCommand {
 
 	// Select message.
 	msgIndex := rand.Intn(len(folder.Messages))
-	arguments = append(arguments, strconv.Itoa(msgIndex+1))
+	arguments = append(arguments, strconv.Itoa((msgIndex + 1)))
 
-	flagstring, flags := utils.GenerateFlags()
-	arguments = append(arguments, flagstring)
+	flagsString, flags := utils.GenerateFlags()
+	arguments = append(arguments, flagsString)
 
 	folder.Messages[msgIndex].Flags = flags
 
-	return IMAPCommand{Command: "STORE", Arguments: arguments}
+	return IMAPCommand{
+		Command:   "STORE",
+		Arguments: arguments,
+	}
 }
 
 // GenerateSession generates a random sequence of IMAPCommands.
@@ -192,7 +217,7 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 
 		// The following lines represent the allowed IMAP states
 		// in a session. Based on the current state of the mailbox,
-		// certain IMAP commands might not be allowed e.g.
+		// certain IMAP commands might not be allowed, e.g.
 		// a DELETE is only allowed when there are any folders
 		// to be deleted. Hence the following state tree.
 
@@ -200,12 +225,11 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 
 			// We begin with the case where the mailbox is empty.
 			// Hence CREATE is the only allowed command.
-
 			commands = append(commands, createFolder(&folders))
 		} else {
 
 			// If there are folders in the mailbox, we need
-			// to check wheter a folder has been selected.
+			// to check whether a folder has been selected.
 			// Depending on the selected state, other commands
 			// might be allowed.
 
@@ -214,7 +238,7 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 				// If the mailbox contains at least one folder and
 				// no folder has been selected by SELECT, we allow
 				// the following commands:
-				// CREATE, DELETE, APPEND, SELECT
+				// CREATE, DELETE, APPEND, SELECT.
 
 				switch {
 				case 0.0 <= r && r < 0.25:
@@ -230,24 +254,23 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 			} else {
 
 				// In this case the mailbox contains at least one folder
-				// and a one of these folders has been selected.
-				// Next, we need to check wheter there are other folders
-				// in the mailbox in order to allow/disallow commands like:
+				// and one of these folders has been selected. Next, we
+				// need to check whether there are other folders in the
+				// mailbox in order to allow or disallow commands like:
 				// DELETE or SELECT.
 
 				if len(folders) == 1 {
 
 					// In case the mailbox contains only one folder and
-					// this folder is selected, we need to check wheter
+					// this folder is selected, we need to check whether
 					// there are any messages in the folder in order
-					// to allow/disallow the STORE command.
+					// to allow or disallow the STORE command.
 
 					if len(folders[selected].Messages) == 0 {
 
 						// If there are no messages present in the selected
 						// folder, we only allow the following commands:
-						// CREATE, APPEND, EXPUNGE
-
+						// CREATE, APPEND, EXPUNGE.
 						switch {
 						case 0.0 <= r && r < 0.3:
 							commands = append(commands, createFolder(&folders))
@@ -262,7 +285,7 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 						// If there are messages in the selected folder,
 						// we can allow STORE as well. Hence the following
 						// commands are allowed in this case:
-						// CREATE, APPEND, STORE, EXPUNGE
+						// CREATE, APPEND, STORE, EXPUNGE.
 						switch {
 						case 0.0 <= r && r < 0.25:
 							commands = append(commands, createFolder(&folders))
@@ -274,22 +297,20 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 							commands = append(commands, expungeFolder(&folders[selected]))
 						}
 					}
-
 				} else {
 
-					// In this case the mailbox contains more that one
-					// folders and one of these folders is selected.
-					// This represents to case with the most variety of
+					// In this case the mailbox contains more than one
+					// folder and one of these folders is selected.
+					// This represents the case with the most variety of
 					// IMAP commands. Nevertheless we need to check
-					// wheter there are messages in the selected folder
-					// in order to allow/disallow the STORE command.
+					// whether there are messages in the selected folder
+					// in order to allow or disallow the STORE command.
 
 					if len(folders[selected].Messages) == 0 {
 
 						// If there are no messages present, we allow
 						// everything except the STORE command:
-						// CREATE, DELETE, APPEND, SELECT, EXPUNGE
-
+						// CREATE, DELETE, APPEND, SELECT, EXPUNGE.
 						switch {
 						case 0.0 <= r && r < 0.15:
 							commands = append(commands, createFolder(&folders))
@@ -302,12 +323,10 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 						case 0.9 <= r && r < 1.0:
 							commands = append(commands, expungeFolder(&folders[selected]))
 						}
-
 					} else {
 
 						// In this case we basically allow every IMAP command:
-						// CREATE, DELETE, APPEND, STORE, SELECT, EXPUNGE
-
+						// CREATE, DELETE, APPEND, STORE, SELECT, EXPUNGE.
 						switch {
 						case 0.0 <= r && r < 0.15:
 							commands = append(commands, createFolder(&folders))
@@ -328,16 +347,22 @@ func GenerateSession(minLength int, maxLength int) []IMAPCommand {
 		}
 	}
 
-	// select the inbox
+	// Select INBOX at the end of the session.
 	var arguments []string
 	arguments = append(arguments, "INBOX")
-	commands = append(commands, IMAPCommand{Command: "SELECT", Arguments: arguments})
+	commands = append(commands, IMAPCommand{
+		Command:   "SELECT",
+		Arguments: arguments,
+	})
 
 	// Finish session by deleting all created folders.
 	// for i := 0; i < len(folders); i++ {
 	// 	var args []string
-	// 	args = append(args, folders[i].Foldername)
-	// 	commands = append(commands, IMAPCommand{Command: "DELETE", Arguments: args})
+	// 	args = append(args, folders[i].FolderName)
+	// 	commands = append(commands, IMAPCommand{
+	// 		Command:   "DELETE",
+	// 		Arguments: args,
+	// 	})
 	// }
 
 	return commands
