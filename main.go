@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"math/rand"
+	"encoding/json"
 
 	"cloud.google.com/go/storage"
 	"github.com/go-pluto/benchmark/config"
@@ -42,6 +43,12 @@ func main() {
 	conf, err := config.LoadConfig(*configFlag)
 	if err != nil {
 		glog.Fatalf("Error loading config: %v", err)
+	}
+
+	// Encode the configuration in json
+	jsonConf, err := json.Marshal(conf)
+	if err != nil {
+		glog.Fatalf("Error encoding config in JSON: %v", err)
 	}
 
 	// Load users from userdb file.
@@ -87,7 +94,20 @@ func main() {
 	wc := client.Bucket("pluto-benchmark").Object(timestamp.Format("2006-01-02-15-04-05")).NewWriter(ctx)
 
 	// Write first line with host information to GCS.
-	_, err = wc.Write([]byte(fmt.Sprintf("Connected to: %s\n########################\n", conf.Server.Addr)))
+	// TODO comment
+	_, err = wc.Write([]byte("{\"Configuration\":"))
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	// TODO comment
+	_, err = wc.Write(jsonConf)
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	// TODO comment
+	_, err = wc.Write([]byte(",\"Sessions\":["))
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -143,8 +163,14 @@ func main() {
 
 			// If according log level is set
 			// log to glog.
-			glog.Infof("%s", logline[i])
+			glog.Infof("%s\n", logline[i])
 		}
+	}
+
+	// TODO comment
+	_, err = wc.Write([]byte("]}"))
+	if err != nil {
+		glog.Fatal(err)
 	}
 
 	err = logFile.Sync()
