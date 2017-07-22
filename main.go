@@ -86,6 +86,12 @@ func main() {
 	// benchmark results to run-specific file.
 	wc := client.Bucket("pluto-benchmark").Object(timestamp.Format("2006-01-02-15-04-05")).NewWriter(ctx)
 
+	// Write first line with host information to GCS.
+	_, err = wc.Write([]byte(fmt.Sprintf("Connected to: %s\n########################\n", conf.Server.Addr)))
+	if err != nil {
+		glog.Fatal(err)
+	}
+
 	// Create the buffered channels. Channel "jobs" is for each session,
 	// channel "logger" for the logged parameters (e.g. response time).
 	jobs := make(chan worker.Session, 100)
