@@ -2,18 +2,18 @@ package main
 
 import (
 	"flag"
-	"os"
-	"fmt"
 	"io"
+	"os"
+	"time"
 
 	"math/rand"
 
+	"cloud.google.com/go/storage"
 	"github.com/go-pluto/benchmark/config"
 	"github.com/go-pluto/benchmark/sessions"
 	"github.com/go-pluto/benchmark/worker"
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
-	"cloud.google.com/go/storage"
 )
 
 // Functions
@@ -24,6 +24,19 @@ func main() {
 	configFlag := flag.String("config", "test-config.toml", "Specify location of config file that describes test setup configuration.")
 	userdbFlag := flag.String("userdb", "userdb.passwd", "Specify location of the user/password file.")
 	flag.Parse()
+
+	// Check that associated Google Cloud Project
+	// is set as environment variable.
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if projectID == "" {
+		glog.Fatal("GOOGLE_CLOUD_PROJECT environment variable must be set")
+	}
+
+	// Make sure that we possess Application Default Credentials.
+	appCredentials := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if appCredentials == "" {
+		glog.Fatal("GOOGLE_APPLICATION_CREDENTIALS evironment variable must point to a valid Application Default Credentials file")
+	}
 
 	// Read configuration from file.
 	conf, err := config.LoadConfig(*configFlag)
@@ -37,12 +50,11 @@ func main() {
 		glog.Fatalf("Error loading users from '%s' file: %v", *userdbFlag, err)
 	}
 
-
-
+	timestamp := time.Now()
 
 	// Check results folder existence and create
 	// a log file for this run.
-	logFile, err := config.CreateLog()
+	logFile, err := config.CreateLog(timestamp)
 	if err != nil {
 		glog.Fatalf("Failed to create log file: %v", err)
 	}
@@ -95,29 +107,37 @@ func main() {
 	}
 	logFile.Sync()
 
-	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	if projectID == "" {
-		fmt.Fprintf(os.Stderr, "GOOGLE_CLOUD_PROJECT environment variable must be set.\n")
-		os.Exit(1)
+	// Reset log file head to beginning.
+	_, err = logFile.Seek(0, os.SEEK_SET)
+	if err != nil {
+		glog.Fatal(err)
 	}
 
+	// Connect to GCS for log file uploading.
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		glog.Fatal(err)
 	}
 
-	logFile.Seek(0,0)
+	// Obtain writer that is able to upload
+	// benchmark results to run-specific file.
+	wc := client.Bucket("pluto-benchmark").Object(timestamp.Format("2006-01-02-15-04-05")).NewWriter(ctx)
 
-	wc := client.Bucket("pluto-benchmark").Object("testobjectsss").NewWriter(ctx)
-	if _, err = io.Copy(wc, logFile); err != nil {
+	// Upload the benchmark result file.
+	_, err = io.Copy(wc, logFile)
+	if err != nil {
 		glog.Fatal(err)
 	}
-	if err := wc.Close(); err != nil {
+
+	err = wc.Close()
+	if err != nil {
 		glog.Fatal(err)
 	}
-	fmt.Println("yolo")
-	if _, err = io.Copy(os.Stdout, logFile); err != nil {
+
+	// Output log to STDOUT.
+	_, err = io.Copy(os.Stdout, logFile)
+	if err != nil {
 		glog.Fatal(err)
 	}
 }

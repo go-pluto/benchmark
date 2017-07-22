@@ -13,7 +13,7 @@ import (
 // CreateLog checks for existence of a 'results'
 // folder in current directory and creates and
 // opens a log file for the current run.
-func CreateLog() (*os.File, error) {
+func CreateLog(timestamp time.Time) (*os.File, error) {
 
 	// Retrieve current directory.
 	dir, err := filepath.Abs(".")
@@ -25,7 +25,7 @@ func CreateLog() (*os.File, error) {
 	resultsDir := filepath.Join(dir, "results")
 
 	// Name and path to log file for this run.
-	logFileName := fmt.Sprintf("%s.log", time.Now().Format("2006-01-02-15-04-05"))
+	logFileName := fmt.Sprintf("%s.log", timestamp.Format("2006-01-02-15-04-05"))
 	logFilePath := filepath.Join(resultsDir, logFileName)
 
 	// Ensure that a folder 'results' is present.
