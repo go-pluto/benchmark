@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"time"
 
@@ -59,6 +60,17 @@ func main() {
 	}
 	defer logFile.Close()
 	defer logFile.Sync()
+
+	// Specify as first line to which host we will connect.
+	_, err = logFile.WriteString(fmt.Sprintf("Connected to: %s\n########################\n", conf.Server.Addr))
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	err = logFile.Sync()
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	// Seed the random number generator.
 	rand.Seed(conf.Settings.Seed)

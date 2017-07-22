@@ -38,7 +38,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 		output = append(output, fmt.Sprintf("Session: %d\n", job.ID))
 		output = append(output, fmt.Sprintf("User: %s\n", job.User))
 		output = append(output, fmt.Sprintf("Password: %s\n", job.Password))
-		output = append(output, "---- COMMANDS ----")
+		output = append(output, "---- COMMANDS ----\n")
 
 		// Connect to remote server.
 		tlsConn, err := tls.Dial("tcp", config.Server.Addr, &tls.Config{
@@ -72,7 +72,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				output = append(output, fmt.Sprintf("CREATE %d", respTime))
+				output = append(output, fmt.Sprintf("CREATE %d\n", respTime))
 
 			case "DELETE":
 
@@ -83,7 +83,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				output = append(output, fmt.Sprintf("DELETE %d", respTime))
+				output = append(output, fmt.Sprintf("DELETE %d\n", respTime))
 
 			case "APPEND":
 
@@ -95,7 +95,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				output = append(output, fmt.Sprintf("APPEND %d", respTime))
+				output = append(output, fmt.Sprintf("APPEND %d\n", respTime))
 
 			case "SELECT":
 
@@ -112,7 +112,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				output = append(output, fmt.Sprintf("SELECT %d", respTime))
+				output = append(output, fmt.Sprintf("SELECT %d\n", respTime))
 
 			case "STORE":
 
@@ -123,7 +123,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				output = append(output, fmt.Sprintf("STORE %d", respTime))
+				output = append(output, fmt.Sprintf("STORE %d\n", respTime))
 
 			case "EXPUNGE":
 
@@ -134,7 +134,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				output = append(output, fmt.Sprintf("EXPUNGE %d", respTime))
+				output = append(output, fmt.Sprintf("EXPUNGE %d\n", respTime))
 
 			case "CLOSE":
 
@@ -145,13 +145,13 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				output = append(output, fmt.Sprintf("CLOSE %d", respTime))
+				output = append(output, fmt.Sprintf("CLOSE %d\n", respTime))
 			}
 
 			glog.V(2).Info(job.Commands[i].Command, " finished.")
 		}
 
-		output = append(output, "########################")
+		output = append(output, "########################\n")
 
 		conn.logout(id)
 		glog.V(2).Info("LOGOUT successful, user: ", job.User, " pw: ", job.Password)
