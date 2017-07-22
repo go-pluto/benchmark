@@ -7,10 +7,9 @@ import (
 
 	"crypto/tls"
 
-	"github.com/golang/glog"
-
 	"github.com/go-pluto/benchmark/config"
 	"github.com/go-pluto/benchmark/sessions"
+	"github.com/golang/glog"
 )
 
 // Structs
@@ -36,11 +35,10 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 
 		var output []string
 
-		output = append(output, "########################")
-		output = append(output, fmt.Sprintf("Session: %d", job.ID))
-		output = append(output, fmt.Sprintf("User: %s", job.User))
-		output = append(output, fmt.Sprintf("Password: %s", job.Password))
-		output = append(output, "---- starting commands ----")
+		output = append(output, fmt.Sprintf("Session: %d\n", job.ID))
+		output = append(output, fmt.Sprintf("User: %s\n", job.User))
+		output = append(output, fmt.Sprintf("Password: %s\n", job.Password))
+		output = append(output, "---- COMMANDS ----")
 
 		// Connect to remote server.
 		tlsConn, err := tls.Dial("tcp", config.Server.Addr, &tls.Config{

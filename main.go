@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"io"
 	"os"
 	"time"
 
@@ -64,6 +63,17 @@ func main() {
 	// Seed the random number generator.
 	rand.Seed(conf.Settings.Seed)
 
+	// Connect to GCS for log file uploading.
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	// Obtain writer that is able to upload
+	// benchmark results to run-specific file.
+	wc := client.Bucket("pluto-benchmark").Object(timestamp.Format("2006-01-02-15-04-05")).NewWriter(ctx)
+
 	// Create the buffered channels. Channel "jobs" is for each session,
 	// channel "logger" for the logged parameters (e.g. response time).
 	jobs := make(chan worker.Session, 100)
@@ -100,43 +110,31 @@ func main() {
 		logline := <-logger
 
 		for i := 0; i < len(logline); i++ {
-			logFile.WriteString(logline[i])
+
+			// Write log line to log file.
+			_, err := logFile.WriteString(logline[i])
+			if err != nil {
+				glog.Fatal(err)
+			}
+
+			// Write log line to GCS bucket object.
+			_, err = wc.Write([]byte(logline[i]))
+			if err != nil {
+				glog.Fatal(err)
+			}
+
+			// If according log level is set
+			// log to glog.
 			glog.Infof("%s", logline[i])
-			logFile.WriteString("\n")
 		}
 	}
-	logFile.Sync()
 
-	// Reset log file head to beginning.
-	_, err = logFile.Seek(0, os.SEEK_SET)
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	// Connect to GCS for log file uploading.
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	// Obtain writer that is able to upload
-	// benchmark results to run-specific file.
-	wc := client.Bucket("pluto-benchmark").Object(timestamp.Format("2006-01-02-15-04-05")).NewWriter(ctx)
-
-	// Upload the benchmark result file.
-	_, err = io.Copy(wc, logFile)
+	err = logFile.Sync()
 	if err != nil {
 		glog.Fatal(err)
 	}
 
 	err = wc.Close()
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	// Output log to STDOUT.
-	_, err = io.Copy(os.Stdout, logFile)
 	if err != nil {
 		glog.Fatal(err)
 	}
