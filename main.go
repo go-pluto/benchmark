@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"os"
+	"fmt"
+	"io"
 
 	"math/rand"
 
@@ -9,6 +12,8 @@ import (
 	"github.com/go-pluto/benchmark/sessions"
 	"github.com/go-pluto/benchmark/worker"
 	"github.com/golang/glog"
+	"golang.org/x/net/context"
+	"cloud.google.com/go/storage"
 )
 
 // Functions
@@ -31,6 +36,9 @@ func main() {
 	if err != nil {
 		glog.Fatalf("Error loading users from '%s' file: %v", *userdbFlag, err)
 	}
+
+
+
 
 	// Check results folder existence and create
 	// a log file for this run.
@@ -84,5 +92,32 @@ func main() {
 			glog.Infof("%s", logline[i])
 			logFile.WriteString("\n")
 		}
+	}
+	logFile.Sync()
+
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if projectID == "" {
+		fmt.Fprintf(os.Stderr, "GOOGLE_CLOUD_PROJECT environment variable must be set.\n")
+		os.Exit(1)
+	}
+
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	logFile.Seek(0,0)
+
+	wc := client.Bucket("pluto-benchmark").Object("testobjectsss").NewWriter(ctx)
+	if _, err = io.Copy(wc, logFile); err != nil {
+		glog.Fatal(err)
+	}
+	if err := wc.Close(); err != nil {
+		glog.Fatal(err)
+	}
+	fmt.Println("yolo")
+	if _, err = io.Copy(os.Stdout, logFile); err != nil {
+		glog.Fatal(err)
 	}
 }
