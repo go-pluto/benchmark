@@ -114,8 +114,8 @@ func main() {
 
 	// Create the buffered channels. Channel "jobs" is for each session,
 	// channel "logger" for the logged parameters (e.g. response time).
-	jobs := make(chan worker.Session, 100)
-	logger := make(chan []string, 100)
+	jobs := make(chan worker.Session, conf.Settings.Sessions)
+	logger := make(chan []string, conf.Settings.Sessions)
 
 	// Start the worker pool.
 	for w := 1; w <= conf.Settings.Threads; w++ {
