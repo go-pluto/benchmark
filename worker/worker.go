@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"time"
 	s "strings"
 
 	"crypto/tls"
@@ -64,6 +65,8 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 
 			glog.V(2).Info("Sending ", job.Commands[i].Command)
 
+			nanos := time.Now().UnixNano()
+
 			switch job.Commands[i].Command {
 
 			case "CREATE":
@@ -75,7 +78,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				commandlog = append(commandlog, fmt.Sprintf("[\"CREATE\",%d]", respTime))
+				commandlog = append(commandlog, fmt.Sprintf("[%d,\"CREATE\",%d]", nanos, respTime))
 
 			case "DELETE":
 
@@ -86,7 +89,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				commandlog = append(commandlog, fmt.Sprintf("[\"DELETE\",%d]", respTime))
+				commandlog = append(commandlog, fmt.Sprintf("[%d,\"DELETE\",%d]", nanos, respTime))
 
 			case "APPEND":
 
@@ -98,7 +101,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				commandlog = append(commandlog, fmt.Sprintf("[\"APPEND\",%d]", respTime))
+				commandlog = append(commandlog, fmt.Sprintf("[%d,\"APPEND\",%d]", nanos, respTime))
 
 			case "SELECT":
 
@@ -115,7 +118,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				commandlog = append(commandlog, fmt.Sprintf("[\"SELECT\",%d]", respTime))
+				commandlog = append(commandlog, fmt.Sprintf("[%d,\"SELECT\",%d]", nanos, respTime))
 
 			case "STORE":
 
@@ -126,7 +129,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				commandlog = append(commandlog, fmt.Sprintf("[\"STORE\",%d]", respTime))
+				commandlog = append(commandlog, fmt.Sprintf("[%d,\"STORE\",%d]", nanos, respTime))
 
 			case "EXPUNGE":
 
@@ -137,7 +140,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				commandlog = append(commandlog, fmt.Sprintf("[\"EXPUNGE\",%d]", respTime))
+				commandlog = append(commandlog, fmt.Sprintf("[%d,\"EXPUNGE\",%d]", nanos, respTime))
 
 			case "CLOSE":
 
@@ -148,7 +151,7 @@ func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []st
 					log.Fatal(err)
 				}
 
-				commandlog = append(commandlog, fmt.Sprintf("[\"CLOSE\",%d]", respTime))
+				commandlog = append(commandlog, fmt.Sprintf("[%d,\"CLOSE\",%d]", nanos, respTime))
 			}
 
 			glog.V(2).Info(job.Commands[i].Command, " finished.")

@@ -147,6 +147,20 @@ func main() {
 
 		logline := <-logger
 
+		if a != 1 {
+			// Write log line to log file.
+			_, err := logFile.WriteString(",")
+			if err != nil {
+				glog.Fatal(err)
+			}
+
+			// Write log line to GCS bucket object.
+			_, err = wc.Write([]byte(","))
+			if err != nil {
+				glog.Fatal(err)
+			}
+		}
+
 		for i := 0; i < len(logline); i++ {
 
 			// Write log line to log file.
