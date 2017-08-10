@@ -6,8 +6,10 @@ import (
 	"os"
 	"time"
 
-	"math/rand"
 	"encoding/json"
+	"math/rand"
+	"net/http"
+	_ "net/http/pprof"
 
 	"cloud.google.com/go/storage"
 	"github.com/go-pluto/benchmark/config"
@@ -20,6 +22,9 @@ import (
 // Functions
 
 func main() {
+	go func() {
+		glog.Warning(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	// Parse the input flags.
 	configFlag := flag.String("config", "test-config.toml", "Specify location of config file that describes test setup configuration.")
