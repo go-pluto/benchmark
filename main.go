@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"math/rand"
 	"encoding/json"
+	"math/rand"
 
 	"cloud.google.com/go/storage"
 	"github.com/go-pluto/benchmark/config"
@@ -148,6 +148,7 @@ func main() {
 		logline := <-logger
 
 		if a != 1 {
+
 			// Write log line to log file.
 			_, err := logFile.WriteString(",")
 			if err != nil {
