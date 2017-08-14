@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
+
 	"os"
+	"io"
 	"time"
 
 	"encoding/json"
@@ -11,12 +12,13 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"cloud.google.com/go/storage"
+
 	"github.com/go-pluto/benchmark/config"
-	"github.com/go-pluto/benchmark/sessions"
 	"github.com/go-pluto/benchmark/worker"
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
+	"cloud.google.com/go/storage"
+
 )
 
 // Functions
@@ -54,7 +56,7 @@ func main() {
 	// Encode the configuration in json
 	jsonConf, err := json.Marshal(conf)
 	if err != nil {
-		glog.Fatalf("Error encoding config in JSON: %v", err)
+	 	glog.Fatalf("Error encoding config in JSON: %v", err)
 	}
 
 	// Load users from userdb file.
@@ -74,8 +76,71 @@ func main() {
 	defer logFile.Close()
 	defer logFile.Sync()
 
-	// Specify as first line to which host we will connect.
-	_, err = logFile.WriteString(fmt.Sprintf("Connected to: %s\n########################\n", conf.Server.Addr))
+	// Seed the random number generator.
+	rand.Seed(conf.Settings.Seed)
+
+	// Write first line with host information to GCS.
+	// TODO comment
+	_, err = logFile.WriteString("{\"Configuration\":")
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	// TODO comment
+	_, err = logFile.Write(jsonConf)
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	// TODO comment
+	_, err = logFile.WriteString(",\"Sessions\":[")
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	// Create the buffered channels. Channel "jobs" is for each session,
+	// channel "logger" for the logged parameters (e.g. response time).
+	jobs := make(chan worker.Session, 100)
+	logger := make(chan []string, 100)
+
+	// Start the worker pool.
+	for w := 1; w <= conf.Settings.Threads; w++ {
+		go worker.Worker(w, conf, jobs, logger)
+	}
+
+	go worker.Generator(conf, jobs, users)
+
+	// Collect results and write them to disk.
+
+	for a := 1; a <= conf.Settings.Sessions; a++ {
+
+		logline := <-logger
+		glog.Infof("Finished Session: %d", a)
+
+		if a != 1 {
+			// Write log line to log file.
+			_, err := logFile.WriteString(",")
+			if err != nil {
+				glog.Fatal(err)
+			}
+		}
+
+		for i := 0; i < len(logline); i++ {
+
+			_, err := logFile.WriteString(logline[i])
+			if err != nil {
+				glog.Fatal(err)
+			}
+		}
+
+		err = logFile.Sync()
+		if err != nil {
+			glog.Fatal(err)
+		}
+	}
+
+	// TODO comment
+	_, err = logFile.WriteString("]}")
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -84,9 +149,6 @@ func main() {
 	if err != nil {
 		glog.Fatal(err)
 	}
-
-	// Seed the random number generator.
-	rand.Seed(conf.Settings.Seed)
 
 	// Connect to GCS for log file uploading.
 	ctx := context.Background()
@@ -99,102 +161,10 @@ func main() {
 	// benchmark results to run-specific file.
 	wc := client.Bucket("pluto-benchmark").Object(timestamp.Format("2006-01-02-15-04-05")).NewWriter(ctx)
 
-	// Write first line with host information to GCS.
-	// TODO comment
-	_, err = wc.Write([]byte("{\"Configuration\":"))
-	if err != nil {
-		glog.Fatal(err)
-	}
+	logFile.Seek(0,0)
 
-	// TODO comment
-	_, err = wc.Write(jsonConf)
-	if err != nil {
-		glog.Fatal(err)
-	}
+	_, err = io.Copy(wc, logFile)
 
-	// TODO comment
-	_, err = wc.Write([]byte(",\"Sessions\":["))
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	// Create the buffered channels. Channel "jobs" is for each session,
-	// channel "logger" for the logged parameters (e.g. response time).
-	jobs := make(chan worker.Session, conf.Settings.Sessions)
-	logger := make(chan []string, conf.Settings.Sessions)
-
-	// Start the worker pool.
-	for w := 1; w <= conf.Settings.Threads; w++ {
-		go worker.Worker(w, conf, jobs, logger)
-	}
-
-	// Assign jobs sessions.
-	for j := 1; j <= conf.Settings.Sessions; j++ {
-
-		// Randomly choose a user.
-		i := rand.Intn(len(users))
-
-		// Hand over the job to the worker.
-		jobs <- worker.Session{
-			User:     users[i].Username,
-			Password: users[i].Password,
-			ID:       j,
-			Commands: sessions.GenerateSession(conf.Session.MinLength, conf.Session.MaxLength),
-		}
-	}
-
-	glog.Infof("Generated %d sessions.", conf.Settings.Sessions)
-
-	// Close jobs channel to stop all worker routines.
-	close(jobs)
-
-	// Collect results and write them to disk.
-	for a := 1; a <= conf.Settings.Sessions; a++ {
-
-		logline := <-logger
-
-		if a != 1 {
-
-			// Write log line to log file.
-			_, err := logFile.WriteString(",")
-			if err != nil {
-				glog.Fatal(err)
-			}
-
-			// Write log line to GCS bucket object.
-			_, err = wc.Write([]byte(","))
-			if err != nil {
-				glog.Fatal(err)
-			}
-		}
-
-		for i := 0; i < len(logline); i++ {
-
-			// Write log line to log file.
-			_, err := logFile.WriteString(logline[i])
-			if err != nil {
-				glog.Fatal(err)
-			}
-
-			// Write log line to GCS bucket object.
-			_, err = wc.Write([]byte(logline[i]))
-			if err != nil {
-				glog.Fatal(err)
-			}
-
-			// If according log level is set
-			// log to glog.
-			glog.Infof("%s\n", logline[i])
-		}
-	}
-
-	// TODO comment
-	_, err = wc.Write([]byte("]}"))
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	err = logFile.Sync()
 	if err != nil {
 		glog.Fatal(err)
 	}

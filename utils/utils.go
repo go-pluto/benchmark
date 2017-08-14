@@ -127,13 +127,15 @@ func GenerateMsg() (string, string) {
 
 	// Generate number of lines from msgBodyLines to be
 	// included in this message. 10 <= numLines < 1024.
+	//numLines := rand.Intn(1014) + 10
 	numLines := rand.Intn(1014) + 10
 	includeLines := make([]string, numLines)
 
 	// Fetch according lines.
 	for i := 0; i < numLines; i++ {
-		bodyIndex := rand.Intn(38)
-		includeLines[i] = msgBodyLines[bodyIndex]
+		//bodyIndex := rand.Intn(38)
+		//includeLines[i] = "yolo\r\n"
+		fmt.Sprintf("%s\r\n", GenerateString(10))
 	}
 
 	// Put together final message string.
