@@ -69,7 +69,7 @@ func (c *Conn) sendSimpleCommand(command string) (int64, error) {
 
 	okAnswer := strings.Split(command, " ")[0]
 
-	glog.V(3).Info("Sending command: ", command)
+	//glog.V(3).Info("Sending command: ", command)
 
 	// Start time taken here.
 	timeStart := time.Now().UnixNano()
@@ -84,7 +84,7 @@ func (c *Conn) sendSimpleCommand(command string) (int64, error) {
 		return -1, fmt.Errorf("error during receiving after first imap command: %v", err)
 	}
 
-	glog.V(3).Info("Answer: ", answer)
+	//glog.V(3).Info("Answer: ", answer)
 
 	for !strings.HasPrefix(answer, okAnswer) {
 
@@ -94,7 +94,7 @@ func (c *Conn) sendSimpleCommand(command string) (int64, error) {
 		}
 
 		answer = nextAnswer
-		glog.V(3).Info("Answer: ", answer)
+		//glog.V(3).Info("Answer: ", answer)
 	}
 
 	// End time taken here.
@@ -142,6 +142,8 @@ func (c *Conn) sendAppendCommand(command string, literal string) (int64, error) 
 	if err != nil {
 		return -1, fmt.Errorf("sending mail message to server failed with: %v", err)
 	}
+
+	c.c.SetReadDeadline(time.Now().Add(10*time.Second))
 
 	answer, err = c.r.ReadString('\n')
 	if err != nil {
@@ -195,6 +197,6 @@ func (c *Conn) logout(id int) error {
 
 		answer = nextAnswer
 	}
-
+	c.c.Close()
 	return nil
 }

@@ -31,7 +31,7 @@ type Session struct {
 // Worker is the routine that sends the commands of the session
 // to the server. The output will be logged and written in
 // the logger channel.
-func Worker(id int, config *config.Config, jobs chan Session, logger chan<- []string) {
+func Worker(id int, config *config.Config, jobs <-chan Session, logger chan<- []string) {
 
 	for job := range jobs {
 
