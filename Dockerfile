@@ -6,4 +6,3 @@ RUN apk add -U ca-certificates
 ADD ./benchmark /bin/
 
 ENTRYPOINT ["/bin/benchmark"]
-CMD ["-config", "/config/config.toml", "-userdb", "/users/passwd", "-logtostderr=true", "-v=3"]
