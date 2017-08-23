@@ -49,7 +49,8 @@ func LoadConfig(configFile string) (*Config, error) {
 	conf := &Config{}
 
 	// Parse values from TOML file into struct.
-	if _, err := toml.DecodeFile(configFile, conf); err != nil {
+	_, err := toml.DecodeFile(configFile, conf)
+	if err != nil {
 		return nil, fmt.Errorf("failed to read in TOML config file at '%s' with: %v", configFile, err)
 	}
 

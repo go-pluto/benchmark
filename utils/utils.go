@@ -126,13 +126,13 @@ func GenerateMsg() (string, string) {
 	headerIndex := rand.Intn(5)
 
 	// Generate number of lines of random strings to be
-	// included in this message. 10 <= numLines < 1024.
-	numLines := rand.Intn(1014) + 10
+	// included in this message. 10 <= numLines <= 512.
+	numLines := rand.Intn(503) + 10
 	includeLines := make([]string, numLines)
 
-	// Fetch according lines.
+	// Generate according number of lines.
 	for i := 0; i < numLines; i++ {
-		includeLines[i] = fmt.Sprintf("%s\r\n", GenerateString(10))
+		includeLines[i] = fmt.Sprintf("%s\r\n", GenerateString(64))
 	}
 
 	// Put together final message string.

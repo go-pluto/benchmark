@@ -29,7 +29,8 @@ func CreateLog(timestamp time.Time) (*os.File, error) {
 	logFilePath := filepath.Join(resultsDir, logFileName)
 
 	// Ensure that a folder 'results' is present.
-	if _, err := os.Stat(resultsDir); os.IsNotExist(err) {
+	_, err = os.Stat(resultsDir)
+	if os.IsNotExist(err) {
 
 		// Create all folders including 'results'.
 		err := os.MkdirAll(resultsDir, 0744)

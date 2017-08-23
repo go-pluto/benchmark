@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-
 	"io"
 	"os"
 	"time"
@@ -109,7 +108,6 @@ func main() {
 	go worker.Generator(conf, jobs, users)
 
 	// Collect results and write them to disk.
-
 	for a := 1; a <= conf.Settings.Sessions; a++ {
 
 		logline := <-logger

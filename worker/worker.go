@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	s "strings"
+	"strings"
 	"time"
 
 	"crypto/tls"
@@ -157,7 +157,7 @@ func Worker(id int, config *config.Config, jobs <-chan Session, logger chan<- []
 			glog.V(2).Info(job.Commands[i].Command, " finished.")
 		}
 
-		output = append(output, s.Join(commandlog, ","))
+		output = append(output, strings.Join(commandlog, ","))
 		output = append(output, "]}")
 
 		conn.logout(id)
