@@ -143,7 +143,7 @@ func (c *Conn) sendAppendCommand(command string, literal string) (int64, error) 
 		return -1, fmt.Errorf("sending mail message to server failed with: %v", err)
 	}
 
-	c.c.SetReadDeadline(time.Now().Add(20*time.Second))
+	// c.c.SetReadDeadline(time.Now().Add(20*time.Second))
 
 	answer, err = c.r.ReadString('\n')
 	if err != nil {
