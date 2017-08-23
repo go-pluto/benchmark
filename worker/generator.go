@@ -2,6 +2,7 @@ package worker
 
 import (
 	"math/rand"
+
 	"github.com/go-pluto/benchmark/config"
 	"github.com/go-pluto/benchmark/sessions"
 )
@@ -29,5 +30,4 @@ func Generator(conf *config.Config, jobs chan Session, users []config.User) {
 
 	// Close jobs channel to stop all worker routines.
 	// close(jobs)
-
 }

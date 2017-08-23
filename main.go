@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	"os"
 	"io"
+	"os"
 	"time"
 
 	"encoding/json"
@@ -12,13 +12,11 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-
+	"cloud.google.com/go/storage"
 	"github.com/go-pluto/benchmark/config"
 	"github.com/go-pluto/benchmark/worker"
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
-	"cloud.google.com/go/storage"
-
 )
 
 // Functions
@@ -56,7 +54,7 @@ func main() {
 	// Encode the configuration in json
 	jsonConf, err := json.Marshal(conf)
 	if err != nil {
-	 	glog.Fatalf("Error encoding config in JSON: %v", err)
+		glog.Fatalf("Error encoding config in JSON: %v", err)
 	}
 
 	// Load users from userdb file.
@@ -161,7 +159,7 @@ func main() {
 	// benchmark results to run-specific file.
 	wc := client.Bucket("pluto-benchmark").Object(timestamp.Format("2006-01-02-15-04-05")).NewWriter(ctx)
 
-	logFile.Seek(0,0)
+	logFile.Seek(0, 0)
 
 	_, err = io.Copy(wc, logFile)
 
